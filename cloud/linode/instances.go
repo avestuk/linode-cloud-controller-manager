@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/linode/linode-cloud-controller-manager/pkg/linodeid"
 	"github.com/linode/linode-cloud-controller-manager/sentry"
 	"github.com/linode/linodego"
 	v1 "k8s.io/api/core/v1"
@@ -107,8 +108,8 @@ func (i *instances) lookupLinode(ctx context.Context, node *v1.Node) (*linodego.
 	sentry.SetTag(ctx, "provider_id", providerID)
 	sentry.SetTag(ctx, "node_name", node.Name)
 
-	if providerID != "" && isLinodeProviderID(providerID) {
-		id, err := parseProviderID(providerID)
+	if providerID != "" && linodeid.IsLinodeProviderID(providerID) {
+		id, err := linodeid.ParseProviderID(providerID)
 		if err != nil {
 			sentry.CaptureError(ctx, err)
 			return nil, err
@@ -178,7 +179,7 @@ func (i *instances) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloud
 
 	// note that Zone is omitted as it's not a thing in Linode
 	meta := &cloudprovider.InstanceMetadata{
-		ProviderID:    fmt.Sprintf("%v%v", providerIDPrefix, linode.ID),
+		ProviderID:    fmt.Sprintf("%v%v", linodeid.ProviderIDPrefix, linode.ID),
 		NodeAddresses: addresses,
 		InstanceType:  linode.Type,
 		Region:        linode.Region,
